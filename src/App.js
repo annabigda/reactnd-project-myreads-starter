@@ -15,12 +15,12 @@ class Book extends React.Component {
         <div className="book-top">
           <div className="book-cover" style={{ width: 128, height: 188, backgroundImage: `url("${this.props.book.imageLinks.thumbnail}")` }}></div>
           <div className="book-shelf-changer">
-            <select onChange={this.onChange.bind(this)}>
+            <select value={this.props.book.shelf} onChange={this.onChange.bind(this)}>
               <option value="move" disabled>Move to...</option>
-              <option selected={this.props.book.shelf === "currentlyReading"} value="currentlyReading">Currently Reading</option>
-              <option selected={this.props.book.shelf === "wantToRead"} value="wantToRead">Want to Read</option>
-              <option selected={this.props.book.shelf === "read"} value="read">Read</option>
-              <option selected={this.props.book.shelf === "none"} value="none">None</option>
+              <option value="currentlyReading">Currently Reading</option>
+              <option value="wantToRead">Want to Read</option>
+              <option value="read">Read</option>
+              <option value="none">None</option>
             </select>
           </div>
         </div>
