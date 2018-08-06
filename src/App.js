@@ -2,84 +2,51 @@ import React from 'react'
 import * as BooksAPI from './BooksAPI'
 import { Route, Link } from 'react-router-dom'
 import './App.css'
-
-class Book extends React.Component {
-  onChange(e) {
-    const shelf = e.target.value;
-    console.log(this)
-    this.props.updateBook(this.props.book, shelf)
-  }
-  render() {
-    return (
-    <li>
-      <div className="book">
-        <div className="book-top">
-          <div className="book-cover" style={{ width: 128, height: 188, backgroundImage: `url("${this.props.book.imageLinks && this.props.book.imageLinks.thumbnail}")` }}></div>
-          <div className="book-shelf-changer">
-            <select value={this.props.book.shelf || "none"} onChange={this.onChange.bind(this)}>
-              <option value="move" disabled>Move to...</option>
-              <option value="currentlyReading">Currently Reading</option>
-              <option value="wantToRead">Want to Read</option>
-              <option value="read">Read</option>
-              <option value="none">None</option>
-            </select>
-          </div>
-        </div>
-        <div className="book-title">{this.props.book.title}</div>
-        <div className="book-authors">{this.props.book.authors && this.props.book.authors[0]}</div>
-      </div>
-    </li>
-    )
-    }
-}
+import Search from './Search'
+import Shelf from './Shelf'
 
 class BooksApp extends React.Component {
   state = {
-    /**
-     * TODO: Instead of using this state variable to keep track of which page
-     * we're on, use the URL in the browser's address bar. This will ensure that
-     * users can use the browser's back and forward buttons to navigate between
-     * pages, as well as provide a good URL they can bookmark and share.
-     */
     books: [],
     searchBooks: []
   }
 
   componentDidMount() {
-  BooksAPI.getAll()
-      .then((books) => console.log(books) || this.setState({books: books}))
+    // Retrive all the books
+    BooksAPI.getAll()
+      .then((books) => this.setState({books: books}))
   }
 
   currentlyReading() {
-  return this.state.books.filter(book => {
-    return book.shelf === "currentlyReading";
-  })
+    return this.state.books.filter(book => {
+      return book.shelf === "currentlyReading";
+    })
   }
 
   wantToRead() {
-  return this.state.books.filter(book => {
-    return book.shelf === "wantToRead";
-  })
+    return this.state.books.filter(book => {
+      return book.shelf === "wantToRead";
+    })
   }
 
   read() {
-  return this.state.books.filter(book => {
-    return book.shelf === "read";
-  })
+    return this.state.books.filter(book => {
+      return book.shelf === "read";
+    })
   }
 
   // Add or update book to the shelves
   updateBook(book, shelf) {
-  BooksAPI.update(book, shelf)
+    BooksAPI.update(book, shelf)
       .then(() => {
         let books = this.state.books;
         for(var i = 0; i < books.length; i++) {
           if (book.id === books[i].id) {
-          books[i].shelf = shelf;
+            books[i].shelf = shelf;
             // Book is already there
             return this.setState({books: books});
           }
-          }
+        }
         // this is a new book
         book.shelf = shelf;
         books.push(book);
@@ -89,59 +56,39 @@ class BooksApp extends React.Component {
   }
 
   onSearch(e) {
-  BooksAPI
-      .search(e.target.value)
-      .then(books => {
-        if (!books || books.error) {
-        this.setState({searchBooks: []})
-        } else {
-        this.setState({searchBooks: books})
-        }
+    if (e.target.value !== '') {
+      BooksAPI
+        .search(e.target.value)
+        .then(books => {
+          if (!books || books.error) {
+            this.setState({searchBooks: []})
+          } else {
+            this.setState({searchBooks: books})
+          }
         })
+    } else {
+      // Set books to empty array
+      this.setState({searchBooks: []})
+    }
   }
 
   searchBooks() {
-  return this.state.searchBooks.map(book => {
-    for (var i = 0; i < this.state.books.length; i++) {
-      if (this.state.books[i].id === book.id) {
-      book.shelf = this.state.books[i].shelf;
+    return this.state.searchBooks.map(book => {
+      for (var i = 0; i < this.state.books.length; i++) {
+        if (this.state.books[i].id === book.id) {
+          book.shelf = this.state.books[i].shelf;
+        }
       }
-      }
-    return book;
-  })
+      return book;
+    })
   }
 
   render() {
   return (
     <div className="app">
-      <Route exact path='/search' render={() => (
-        <div className="search-books">
-          <div className="search-books-bar">
-            <Link className="close-search" to='/'>Close</Link>
-            <div className="search-books-input-wrapper">
-              {/*
-                  NOTES: The search from BooksAPI is limited to a particular set of search terms.
-                  You can find these search terms here:
-                  https://github.com/udacity/reactnd-project-myreads-starter/blob/master/SEARCH_TERMS.md
-
-                  However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
-                  you don't find a specific author or title. Every search is limited by search terms.
-                  */}
-                  <input onChange={this.onSearch.bind(this)} type="text" placeholder="Search by title or author"/>
-
-                </div>
-              </div>
-              <div className="search-books-results">
-                <ol className="books-grid">
-                  {this.searchBooks().map(book => {
-                    return <Book updateBook={this.updateBook.bind(this)} key={book.id} book={book} />
-                  })}
-
-
-                </ol>
-              </div>
-            </div>
-      )} />
+      <Route exact path='/search' render={() => <Search books={this.searchBooks()}
+                                                        onUpdateBook={this.updateBook.bind(this)}
+                                                        onSearch={this.onSearch.bind(this)} />} />
     <Route exact path='/' render={() => (
       <div className="list-books">
         <div className="list-books-title">
@@ -149,36 +96,19 @@ class BooksApp extends React.Component {
         </div>
         <div className="list-books-content">
           <div>
-            <div className="bookshelf">
-              <h2 className="bookshelf-title">Currently Reading</h2>
-              <div className="bookshelf-books">
-                <ol className="books-grid">
-                  {this.currentlyReading().map(book => {
-                    return <Book updateBook={this.updateBook.bind(this)} key={book.id} book={book} />
-                  })}
-                </ol>
-              </div>
-            </div>
-            <div className="bookshelf">
-              <h2 className="bookshelf-title">Want to Read</h2>
-              <div className="bookshelf-books">
-                <ol className="books-grid">
-                  {this.wantToRead().map(book => {
-                    return <Book updateBook={this.updateBook.bind(this)} key={book.id} book={book} />
-                  })}
-                </ol>
-              </div>
-            </div>
-            <div className="bookshelf">
-              <h2 className="bookshelf-title">Read</h2>
-              <div className="bookshelf-books">
-                <ol className="books-grid">
-                  {this.read().map(book => {
-                    return <Book updateBook={this.updateBook.bind(this)} key={book.id} book={book} />
-                  })}
-                </ol>
-              </div>
-            </div>
+            <Shelf title='Currently Reading'
+                   books={this.currentlyReading()}
+                   onUpdateBook={this.updateBook.bind(this)}
+                   />
+            <Shelf title='Want to Read'
+                   books={this.wantToRead()}
+                   onUpdateBook={this.updateBook.bind(this)}
+                   />
+            <Shelf title='Read'
+                   books={this.read()}
+                   onUpdateBook={this.updateBook.bind(this)}
+                   />
+
           </div>
         </div>
         <div className="open-search">
@@ -189,6 +119,6 @@ class BooksApp extends React.Component {
     </div>
   )
   }
-  }
+}
 
 export default BooksApp
