@@ -1,6 +1,6 @@
 import React from 'react'
 import * as BooksAPI from './BooksAPI'
-import { Route, Link } from 'react-router-dom'
+import { Switch, Route, Link } from 'react-router-dom'
 import './App.css'
 import Search from './Search'
 import Shelf from './Shelf'
@@ -39,20 +39,22 @@ class BooksApp extends React.Component {
   updateBook(book, shelf) {
     BooksAPI.update(book, shelf)
       .then(() => {
-        let books = this.state.books;
-        for(var i = 0; i < books.length; i++) {
-          if (book.id === books[i].id) {
-            books[i].shelf = shelf;
-            // Book is already there
-            return this.setState({books: books});
+        this.setState(previousState => {
+          let books = previousState.books;
+          for(let i = 0; i < books.length; i++) {
+            if (book.id === books[i].id) {
+              books[i].shelf = shelf;
+              // Book is already there
+              return {books: books};
+            }
           }
+          // this is a new book
+          book.shelf = shelf;
+          books.push(book);
+          return {books: books};
         }
-        // this is a new book
-        book.shelf = shelf;
-        books.push(book);
-        this.setState({books: books});
+        )
       })
-
   }
 
   onSearch(e) {
@@ -74,7 +76,7 @@ class BooksApp extends React.Component {
 
   searchBooks() {
     return this.state.searchBooks.map(book => {
-      for (var i = 0; i < this.state.books.length; i++) {
+      for (let i = 0; i < this.state.books.length; i++) {
         if (this.state.books[i].id === book.id) {
           book.shelf = this.state.books[i].shelf;
         }
@@ -86,36 +88,39 @@ class BooksApp extends React.Component {
   render() {
   return (
     <div className="app">
+    <Switch>
       <Route exact path='/search' render={() => <Search books={this.searchBooks()}
                                                         onUpdateBook={this.updateBook.bind(this)}
                                                         onSearch={this.onSearch.bind(this)} />} />
-    <Route exact path='/' render={() => (
-      <div className="list-books">
-        <div className="list-books-title">
-          <h1>MyReads</h1>
-        </div>
-        <div className="list-books-content">
-          <div>
-            <Shelf title='Currently Reading'
-                   books={this.currentlyReading()}
-                   onUpdateBook={this.updateBook.bind(this)}
-                   />
-            <Shelf title='Want to Read'
-                   books={this.wantToRead()}
-                   onUpdateBook={this.updateBook.bind(this)}
-                   />
-            <Shelf title='Read'
-                   books={this.read()}
-                   onUpdateBook={this.updateBook.bind(this)}
-                   />
+      <Route exact path='/' render={() => (
+        <div className="list-books">
+          <div className="list-books-title">
+            <h1>MyReads</h1>
+          </div>
+          <div className="list-books-content">
+            <div>
+              <Shelf title='Currently Reading'
+                     books={this.currentlyReading()}
+                     onUpdateBook={this.updateBook.bind(this)}
+                     />
+              <Shelf title='Want to Read'
+                     books={this.wantToRead()}
+                     onUpdateBook={this.updateBook.bind(this)}
+                     />
+              <Shelf title='Read'
+                     books={this.read()}
+                     onUpdateBook={this.updateBook.bind(this)}
+                     />
 
+            </div>
+          </div>
+          <div className="open-search">
+            <Link to='/search'>Add a book</Link>
           </div>
         </div>
-        <div className="open-search">
-          <Link to='/search'>Add a book</Link>
-        </div>
-      </div>
-      )} />
+        )} />
+      <Route render={() => (<img alt="404 Page not found" src="https://www.hover.com/wp-content/uploads/2015/08/creative-404-pages-3-worrydream.jpg" style={{width: "100%"}} />)} />
+    </Switch>
     </div>
   )
   }

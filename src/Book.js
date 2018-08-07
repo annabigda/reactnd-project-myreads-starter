@@ -5,12 +5,21 @@ class Book extends React.Component {
     const shelf = e.target.value;
     this.props.updateBook(this.props.book, shelf)
   }
+
+  bookImage() {
+    if (this.props.book.imageLinks) {
+      return this.props.book.imageLinks.thumbnail;
+    } else {
+      return 'http://via.placeholder.com/128x193?text=No%20Cover'
+    }
+  }
+
   render() {
     return (
     <li>
       <div className="book">
         <div className="book-top">
-          <div className="book-cover" style={{ width: 128, height: 188, backgroundImage: `url("${this.props.book.imageLinks && this.props.book.imageLinks.thumbnail}")` }}></div>
+          <div className="book-cover" style={{ width: 128, height: 188, backgroundImage: `url("${this.bookImage()}")` }}></div>
           <div className="book-shelf-changer">
             <select value={this.props.book.shelf || "none"} onChange={this.onChange.bind(this)}>
               <option value="move" disabled>Move to...</option>
